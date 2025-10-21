@@ -12,13 +12,13 @@ Design patterns that deal with object creation mechanisms.
 | Creational | 9 | 9 | ████████████ 100% |
 | Structural | 9 | 9 | ████████████ 100% |
 | Behavioral | 13 | 13 | ████████████ 100% |
-| Concurrency | 10 | 15 | ████████░░░░ 67% |
+| Cloud | 30 | 30 | ████████████ 100% |
+| Concurrency | 15 | 15 | ████████████ 100% |
+| Enterprise | 19 | 19 | ████████████ 100% |
+| Additional | 10 | 20 | ██████░░░░░░ 50% |
 | Architectural | 6 | 15 | █████░░░░░░░ 40% |
-| Enterprise | 8 | 19 | ██████░░░░░░ 42% |
-| Cloud | 25 | 30 | ██████████░░ 83% |
 | Microservices | 4 | 19 | ███░░░░░░░░░ 21% |
-| Additional | 6 | 20 | ████░░░░░░░░ 30% |
-| **TOTAL** | **90** | **150** | ████████░░░░ **60%** |
+| **TOTAL** | **115** | **150** | █████████░░░ **77%** |
 - **Factory Method** - Creates objects without specifying exact classes
 - **Abstract Factory** - Creates families of related objects
 - **Builder** - Constructs complex objects step by step
@@ -59,7 +59,7 @@ Design patterns that deal with object collaboration and responsibility.
 - **Specification** - Recombines business logic in boolean fashion
 - **Blackboard** - Multiple subsystems collaborate on shared knowledge
 
-### 4. Concurrency Patterns (10/15) 🔄
+### 4. Concurrency Patterns (15/15) ✅
 Design patterns for multi-threaded programming.
 
 - **Thread Pool** ✅ - Manages pool of worker threads
@@ -72,10 +72,11 @@ Design patterns for multi-threaded programming.
 - **Balking** ✅ - Executes action only in appropriate state
 - **Barrier** ✅ - Waits for multiple threads to reach sync point
 - **Guarded Suspension** ✅ - Waits until safe to proceed
-- Reactor - Handles service requests via event loop
-- Scheduler - Controls order of thread execution
-- Thread-Specific Storage - Per-thread data storage
-- Proactor - Async operation demultiplexing
+- **Reactor** ✅ - Event-driven I/O with event loop
+- **Proactor** ✅ - Asynchronous I/O with completion handlers
+- **Thread-Specific Storage** ✅ - Per-thread data using ThreadLocal
+- **Half-Sync/Half-Async** ✅ - Separates sync and async processing layers
+- **Leader/Followers** ✅ - Thread pool with leader election for events
 
 ### 5. Architectural Patterns (6/15) 🔄
 High-level patterns for system architecture.
@@ -96,7 +97,7 @@ High-level patterns for system architecture.
 - Space-Based Architecture - Distributed in-memory data
 - Broker Pattern - Intermediary for service communication
 
-### 6. Enterprise Patterns (8/19) 🔄
+### 6. Enterprise Patterns (19/19) ✅
 Patterns for enterprise application development.
 
 - **Repository** ✅ - Encapsulates data access logic
@@ -107,20 +108,19 @@ Patterns for enterprise application development.
 - **Active Record** ✅ - Objects handle their own persistence
 - **Table Data Gateway** ✅ - Gateway to database table
 - **Row Data Gateway** ✅ - Gateway to single database row
-- Data Gateway - Encapsulates database access
-- Domain Model - Object model of domain
-- Transaction Script - Organizes business logic by procedures
-- Table Module - Single instance per table
-- Identity Map - Ensures objects loaded only once
-- Lazy Load - Defers initialization until needed
-- Front Controller - Centralized request handling
-- Application Controller - Handles application flow
-- Page Controller - Per-page request handling
-- Template View - Renders info into HTML with templates
-- Transform View - Transforms domain data to HTML
-- Two-Step View - Two-stage view transformation
+- **Domain Model** ✅ - Rich objects with business logic and behavior
+- **Transaction Script** ✅ - Procedural business logic organization
+- **Table Module** ✅ - Single instance handles all table rows
+- **Identity Map** ✅ - Ensures objects loaded only once per session
+- **Lazy Load** ✅ - Defers object loading until needed
+- **Front Controller** ✅ - Centralized request handling entry point
+- **Application Controller** ✅ - Handles application flow and navigation
+- **Page Controller** ✅ - Per-page request handling
+- **Data Gateway** ✅ - Encapsulates database access
+- **Template View** ✅ - Renders info into HTML with templates
+- **Value Object** ✅ - Immutable object compared by value
 
-### 7. Cloud Patterns (25/30) 🔄
+### 7. Cloud Patterns (30/30) ✅
 Patterns for cloud-native applications.
 
 - **Circuit Breaker** ✅ - Prevents calls to failing services
@@ -148,11 +148,11 @@ Patterns for cloud-native applications.
 - **Sidecar** ✅ - Helper container alongside app
 - **Static Content Hosting** ✅ - CDN and static asset delivery
 - **Strangler Fig** ✅ - Incremental legacy migration
-- Federated Identity - Delegates authentication
-- Gatekeeper - Protects using dedicated host
-- Index Table - Creates indexes over data stores
-- Priority Queue - Prioritizes service requests
-- Queue-Based Load Leveling - Queue between task and service
+- **Throttling** ✅ - Rate limiting and traffic control
+- **Valet Key** ✅ - Restricted direct access tokens
+- **Federated Identity** ✅ - External identity providers
+- **Gatekeeper** ✅ - Security gateway validation
+- **Index Table** ✅ - Secondary indexes for queries
 - Scheduler Agent Supervisor - Coordinates distributed actions
 - Sharding - Divides data store into partitions
 - Sidecar - Co-located helper components
@@ -184,11 +184,13 @@ Patterns specific to microservices architecture.
 - Externalized Configuration - Config outside service
 - Consumer-Driven Contract - Consumer defines contract
 
-### 9. Additional Patterns (6/20) 🔄
+### 9. Additional Patterns (10/20) 🔄
 Other useful design patterns.
 
 - **Plugin** ✅ - Adds features via plugins with dynamic loading
 - **Callback** ✅ - Function passed as parameter to be called back later
+- **Specification** ✅ - Encapsulates business rules as composable objects
+- **Value Object** ✅ - Immutable object compared by value
 - **Interceptor** ✅ - Intercepts and modifies requests/responses
 - **Service Locator** ✅ - Registry for obtaining services
 - **Registry** ✅ - Well-known object for finding services
