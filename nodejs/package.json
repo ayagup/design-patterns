@@ -1,0 +1,31 @@
+{
+  "name": "design-patterns-nodejs",
+  "version": "1.0.0",
+  "description": "Complete collection of 142 design patterns implemented in Node.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test-patterns.js",
+    "demo": "node demo-all.js",
+    "generate": "python generate_all_142.py"
+  },
+  "keywords": [
+    "design-patterns",
+    "javascript",
+    "nodejs",
+    "creational-patterns",
+    "structural-patterns",
+    "behavioral-patterns",
+    "concurrency-patterns",
+    "architectural-patterns",
+    "enterprise-patterns",
+    "cloud-patterns",
+    "microservices-patterns"
+  ],
+  "author": "Design Patterns Collection",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "devDependencies": {},
+  "dependencies": {}
+}
