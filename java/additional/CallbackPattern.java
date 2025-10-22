@@ -5,372 +5,376 @@ import java.util.function.*;
 
 /**
  * Callback Pattern
- * Passes executable code as a parameter to be called back later.
+ * 
+ * Intent: A piece of executable code that is passed as an argument
+ * to other code, which is expected to call back (execute) the argument
+ * at a convenient time.
+ * 
+ * Motivation:
+ * Enables asynchronous processing.
+ * Decouples caller from callee.
+ * Allows customization of behavior.
+ * Supports event-driven programming.
+ * 
+ * Applicability:
+ * - Asynchronous operations
+ * - Event handling
+ * - Custom behavior injection
+ * - Non-blocking I/O
  */
-public class CallbackPattern {
-    
-    // Callback interface
-    interface Callback<T> {
-        void onComplete(T result);
-        void onError(Exception error);
-    }
-    
-    // Simple callback interface
-    interface SimpleCallback {
-        void execute();
-    }
-    
-    // Async Task with callback
-    static class AsyncTask<T> {
-        private final Supplier<T> task;
+
+/**
+ * Example 1: Basic Callback Interface
+ * 
+ * Traditional callback using interface
+ */
+interface Callback {
+    void onComplete(String result);
+    void onError(String error);
+}
+
+class FileDownloader {
+    public void download(String url, Callback callback) {
+        System.out.println("  [Downloader] Starting download: " + url);
         
-        public AsyncTask(Supplier<T> task) {
-            this.task = task;
-        }
-        
-        public void execute(Callback<T> callback) {
-            new Thread(() -> {
-                try {
-                    System.out.println("  ⚙️  Task executing in background...");
-                    Thread.sleep(1000); // Simulate work
-                    T result = task.get();
-                    callback.onComplete(result);
-                } catch (Exception e) {
-                    callback.onError(e);
+        // Simulate download
+        new Thread(() -> {
+            try {
+                Thread.sleep(100); // Simulate network delay
+                
+                if (url.contains("valid")) {
+                    callback.onComplete("Downloaded: " + url);
+                } else {
+                    callback.onError("Invalid URL: " + url);
                 }
-            }).start();
-        }
+            } catch (InterruptedException e) {
+                callback.onError("Download interrupted");
+            }
+        }).start();
     }
-    
-    // File downloader with callbacks
-    static class FileDownloader {
-        public void download(String url, Callback<String> callback) {
-            System.out.println("📥 Starting download: " + url);
-            
-            new Thread(() -> {
-                try {
-                    // Simulate download
-                    Thread.sleep(1500);
-                    
-                    if (Math.random() > 0.8) {
-                        throw new Exception("Download failed: Connection timeout");
-                    }
-                    
-                    String content = "File content from " + url;
-                    callback.onComplete(content);
-                    
-                } catch (Exception e) {
-                    callback.onError(e);
+}
+
+/**
+ * Example 2: Functional Callback (Java 8+)
+ * 
+ * Using Consumer and BiConsumer
+ */
+class AsyncProcessor {
+    public void processAsync(String data, 
+                            Consumer<String> onSuccess,
+                            Consumer<String> onFailure) {
+        System.out.println("  [AsyncProcessor] Processing: " + data);
+        
+        new Thread(() -> {
+            try {
+                Thread.sleep(50);
+                
+                if (data != null && !data.isEmpty()) {
+                    String result = "Processed: " + data.toUpperCase();
+                    onSuccess.accept(result);
+                } else {
+                    onFailure.accept("Empty data provided");
                 }
-            }).start();
-        }
+            } catch (Exception e) {
+                onFailure.accept("Processing error: " + e.getMessage());
+            }
+        }).start();
+    }
+}
+
+/**
+ * Example 3: Callback Chain
+ * 
+ * Multiple callbacks in sequence
+ */
+class CallbackChain<T> {
+    private final List<Consumer<T>> callbacks;
+    
+    public CallbackChain() {
+        this.callbacks = new ArrayList<>();
     }
     
-    // Event system with callbacks
-    static class Button {
-        private final String label;
-        private final List<SimpleCallback> clickHandlers = new ArrayList<>();
-        
-        public Button(String label) {
-            this.label = label;
+    public CallbackChain<T> then(Consumer<T> callback) {
+        callbacks.add(callback);
+        return this;
+    }
+    
+    public void execute(T value) {
+        System.out.println("  [CallbackChain] Executing " + callbacks.size() + " callbacks");
+        for (Consumer<T> callback : callbacks) {
+            callback.accept(value);
         }
+    }
+}
+
+class DataPipeline {
+    public void process(String data, CallbackChain<String> chain) {
+        System.out.println("  [Pipeline] Processing: " + data);
         
-        public void onClick(SimpleCallback handler) {
-            clickHandlers.add(handler);
-        }
-        
-        public void click() {
-            System.out.println("\n🖱️  Button clicked: " + label);
-            for (SimpleCallback handler : clickHandlers) {
-                handler.execute();
+        new Thread(() -> {
+            try {
+                Thread.sleep(50);
+                String result = data.toUpperCase();
+                chain.execute(result);
+            } catch (InterruptedException e) {
+                System.err.println("Pipeline interrupted");
+            }
+        }).start();
+    }
+}
+
+/**
+ * Example 4: Event Callback System
+ * 
+ * Callbacks for different event types
+ */
+class EventCallbackSystem {
+    private final Map<String, List<Consumer<Object>>> callbacks;
+    
+    public EventCallbackSystem() {
+        this.callbacks = new HashMap<>();
+    }
+    
+    public void on(String event, Consumer<Object> callback) {
+        callbacks.computeIfAbsent(event, k -> new ArrayList<>()).add(callback);
+        System.out.println("  [EventSystem] Registered callback for: " + event);
+    }
+    
+    public void emit(String event, Object data) {
+        List<Consumer<Object>> eventCallbacks = callbacks.get(event);
+        if (eventCallbacks != null) {
+            System.out.println("  [EventSystem] Emitting event: " + event);
+            for (Consumer<Object> callback : eventCallbacks) {
+                callback.accept(data);
             }
         }
     }
     
-    // HTTP Client with callbacks
-    static class HttpClient {
-        public void get(String url, Callback<String> callback) {
-            System.out.println("📡 GET " + url);
+    public void off(String event) {
+        callbacks.remove(event);
+        System.out.println("  [EventSystem] Removed callbacks for: " + event);
+    }
+}
+
+/**
+ * Example 5: Promise-like Callback
+ * 
+ * Future-style callback with chaining
+ */
+class Promise<T> {
+    private T result;
+    private Exception error;
+    private boolean completed = false;
+    private final List<Consumer<T>> successCallbacks = new ArrayList<>();
+    private final List<Consumer<Exception>> errorCallbacks = new ArrayList<>();
+    
+    public Promise<T> then(Consumer<T> onSuccess) {
+        synchronized (this) {
+            if (completed && error == null) {
+                onSuccess.accept(result);
+            } else {
+                successCallbacks.add(onSuccess);
+            }
+        }
+        return this;
+    }
+    
+    public Promise<T> catchError(Consumer<Exception> onError) {
+        synchronized (this) {
+            if (completed && error != null) {
+                onError.accept(error);
+            } else {
+                errorCallbacks.add(onError);
+            }
+        }
+        return this;
+    }
+    
+    public void resolve(T value) {
+        synchronized (this) {
+            if (completed) return;
             
-            new Thread(() -> {
-                try {
-                    Thread.sleep(800);
-                    String response = "{\"status\": \"success\", \"data\": \"Response from " + url + "\"}";
-                    callback.onComplete(response);
-                } catch (Exception e) {
-                    callback.onError(e);
-                }
-            }).start();
-        }
-        
-        public void post(String url, String data, Callback<String> callback) {
-            System.out.println("📡 POST " + url + " with data: " + data);
+            this.result = value;
+            this.completed = true;
             
-            new Thread(() -> {
-                try {
-                    Thread.sleep(1000);
-                    String response = "{\"status\": \"created\", \"id\": \"12345\"}";
-                    callback.onComplete(response);
-                } catch (Exception e) {
-                    callback.onError(e);
-                }
-            }).start();
+            for (Consumer<T> callback : successCallbacks) {
+                callback.accept(value);
+            }
+            successCallbacks.clear();
         }
     }
     
-    // Data processor with progress callbacks
-    interface ProgressCallback {
-        void onProgress(int percentage, String message);
-        void onComplete();
-    }
-    
-    static class DataProcessor {
-        public void processData(List<String> items, ProgressCallback callback) {
-            new Thread(() -> {
-                System.out.println("\n🔄 Processing " + items.size() + " items...");
-                
-                for (int i = 0; i < items.size(); i++) {
-                    try {
-                        Thread.sleep(500);
-                        int percentage = (int) ((i + 1) * 100.0 / items.size());
-                        callback.onProgress(percentage, "Processing: " + items.get(i));
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        break;
-                    }
-                }
-                
-                callback.onComplete();
-            }).start();
+    public void reject(Exception exception) {
+        synchronized (this) {
+            if (completed) return;
+            
+            this.error = exception;
+            this.completed = true;
+            
+            for (Consumer<Exception> callback : errorCallbacks) {
+                callback.accept(exception);
+            }
+            errorCallbacks.clear();
         }
     }
-    
-    // Chained callbacks
-    static class ChainedCallbackExample {
-        public static void step1(Callback<String> callback) {
-            new Thread(() -> {
-                try {
-                    System.out.println("  Step 1: Fetching user data...");
-                    Thread.sleep(500);
-                    callback.onComplete("user123");
-                } catch (Exception e) {
-                    callback.onError(e);
-                }
-            }).start();
-        }
+}
+
+class AsyncService {
+    public Promise<String> fetchData(String id) {
+        Promise<String> promise = new Promise<>();
         
-        public static void step2(String userId, Callback<String> callback) {
-            new Thread(() -> {
-                try {
-                    System.out.println("  Step 2: Fetching orders for " + userId + "...");
-                    Thread.sleep(500);
-                    callback.onComplete("order456");
-                } catch (Exception e) {
-                    callback.onError(e);
-                }
-            }).start();
-        }
+        System.out.println("  [AsyncService] Fetching data for: " + id);
         
-        public static void step3(String orderId, Callback<String> callback) {
-            new Thread(() -> {
-                try {
-                    System.out.println("  Step 3: Processing payment for " + orderId + "...");
-                    Thread.sleep(500);
-                    callback.onComplete("payment789");
-                } catch (Exception e) {
-                    callback.onError(e);
+        new Thread(() -> {
+            try {
+                Thread.sleep(100);
+                
+                if (id != null && !id.isEmpty()) {
+                    promise.resolve("Data for " + id);
+                } else {
+                    promise.reject(new IllegalArgumentException("Invalid ID"));
                 }
-            }).start();
-        }
+            } catch (InterruptedException e) {
+                promise.reject(e);
+            }
+        }).start();
+        
+        return promise;
     }
+}
+
+/**
+ * Example 6: Callback with State
+ * 
+ * Callbacks that track progress
+ */
+interface ProgressCallback {
+    void onProgress(int percent);
+    void onComplete(String result);
+}
+
+class LongRunningTask {
+    public void execute(String taskName, ProgressCallback callback) {
+        System.out.println("  [Task] Starting: " + taskName);
+        
+        new Thread(() -> {
+            try {
+                for (int i = 0; i <= 100; i += 25) {
+                    Thread.sleep(50);
+                    callback.onProgress(i);
+                }
+                callback.onComplete("Task completed: " + taskName);
+            } catch (InterruptedException e) {
+                System.err.println("Task interrupted");
+            }
+        }).start();
+    }
+}
+
+/**
+ * Demonstration of the Callback Pattern
+ */
+public class CallbackPattern {
     
     public static void main(String[] args) throws InterruptedException {
         System.out.println("=== Callback Pattern Demo ===\n");
         
-        // 1. Basic async task with callback
-        System.out.println("1. Async Task with Callback:");
-        AsyncTask<Integer> task = new AsyncTask<>(() -> {
-            return 42;
-        });
-        
-        task.execute(new Callback<Integer>() {
-            @Override
-            public void onComplete(Integer result) {
-                System.out.println("  ✅ Task completed! Result: " + result);
-            }
-            
-            @Override
-            public void onError(Exception error) {
-                System.out.println("  ❌ Task failed: " + error.getMessage());
-            }
-        });
-        
-        Thread.sleep(1500);
-        
-        System.out.println("\n" + "=".repeat(50));
-        
-        // 2. File downloader
-        System.out.println("\n2. File Download with Callbacks:");
+        // Example 1: Traditional Callback Interface
+        System.out.println("1. Traditional Callback Interface:");
         FileDownloader downloader = new FileDownloader();
         
-        downloader.download("https://example.com/file.pdf", new Callback<String>() {
+        downloader.download("https://example.com/valid-file.zip", new Callback() {
             @Override
-            public void onComplete(String content) {
-                System.out.println("  ✅ Download complete!");
-                System.out.println("  📄 Content: " + content);
+            public void onComplete(String result) {
+                System.out.println("  [Main] " + result);
             }
             
             @Override
-            public void onError(Exception error) {
-                System.out.println("  ❌ Download failed: " + error.getMessage());
+            public void onError(String error) {
+                System.out.println("  [Main] Error: " + error);
             }
         });
         
-        Thread.sleep(2000);
+        Thread.sleep(150); // Wait for async operation
         
-        System.out.println("\n" + "=".repeat(50));
+        // Example 2: Functional Callbacks
+        System.out.println("\n2. Functional Callbacks:");
+        AsyncProcessor processor = new AsyncProcessor();
         
-        // 3. Button click callbacks
-        System.out.println("\n3. Event Callbacks:");
-        Button saveButton = new Button("Save");
+        processor.processAsync("hello world",
+            result -> System.out.println("  [Main] Success: " + result),
+            error -> System.out.println("  [Main] Failure: " + error));
         
-        saveButton.onClick(() -> {
-            System.out.println("  💾 Handler 1: Saving data...");
+        Thread.sleep(100);
+        
+        // Example 3: Callback Chain
+        System.out.println("\n3. Callback Chain:");
+        DataPipeline pipeline = new DataPipeline();
+        
+        CallbackChain<String> chain = new CallbackChain<>();
+        chain.then(data -> System.out.println("  [Step 1] Received: " + data))
+             .then(data -> System.out.println("  [Step 2] Length: " + data.length()))
+             .then(data -> System.out.println("  [Step 3] First char: " + data.charAt(0)));
+        
+        pipeline.process("callback", chain);
+        
+        Thread.sleep(100);
+        
+        // Example 4: Event Callback System
+        System.out.println("\n4. Event Callback System:");
+        EventCallbackSystem eventSystem = new EventCallbackSystem();
+        
+        eventSystem.on("user.login", data -> {
+            System.out.println("  [Callback 1] User logged in: " + data);
         });
         
-        saveButton.onClick(() -> {
-            System.out.println("  📧 Handler 2: Sending notification...");
+        eventSystem.on("user.login", data -> {
+            System.out.println("  [Callback 2] Sending welcome email to: " + data);
         });
         
-        saveButton.onClick(() -> {
-            System.out.println("  📊 Handler 3: Logging event...");
-        });
+        eventSystem.emit("user.login", "alice@example.com");
         
-        saveButton.click();
+        // Example 5: Promise-like Callback
+        System.out.println("\n5. Promise-like Callback:");
+        AsyncService service = new AsyncService();
         
-        System.out.println("\n" + "=".repeat(50));
+        service.fetchData("user-123")
+               .then(data -> System.out.println("  [Main] Fetched: " + data))
+               .then(data -> System.out.println("  [Main] Processing complete"))
+               .catchError(error -> System.out.println("  [Main] Error: " + error.getMessage()));
         
-        // 4. HTTP Client callbacks
-        System.out.println("\n4. HTTP Client Callbacks:");
-        HttpClient client = new HttpClient();
+        Thread.sleep(150);
         
-        client.get("https://api.example.com/users/1", new Callback<String>() {
+        // Example 6: Progress Callback
+        System.out.println("\n6. Progress Callback:");
+        LongRunningTask task = new LongRunningTask();
+        
+        task.execute("Data Analysis", new ProgressCallback() {
             @Override
-            public void onComplete(String response) {
-                System.out.println("  ✅ GET Response: " + response);
+            public void onProgress(int percent) {
+                System.out.println("  [Progress] " + percent + "% complete");
             }
             
             @Override
-            public void onError(Exception error) {
-                System.out.println("  ❌ GET Error: " + error.getMessage());
+            public void onComplete(String result) {
+                System.out.println("  [Complete] " + result);
             }
         });
         
-        Thread.sleep(1000);
+        Thread.sleep(300);
         
-        client.post("https://api.example.com/users", "{\"name\": \"John\"}", new Callback<String>() {
-            @Override
-            public void onComplete(String response) {
-                System.out.println("  ✅ POST Response: " + response);
-            }
-            
-            @Override
-            public void onError(Exception error) {
-                System.out.println("  ❌ POST Error: " + error.getMessage());
-            }
-        });
+        System.out.println("\n=== Pattern Benefits ===");
+        System.out.println("✓ Asynchronous execution");
+        System.out.println("✓ Decouples components");
+        System.out.println("✓ Event-driven architecture");
+        System.out.println("✓ Custom behavior injection");
+        System.out.println("✓ Non-blocking operations");
         
-        Thread.sleep(1500);
-        
-        System.out.println("\n" + "=".repeat(50));
-        
-        // 5. Progress callbacks
-        System.out.println("\n5. Progress Callbacks:");
-        DataProcessor processor = new DataProcessor();
-        List<String> items = Arrays.asList("Item1", "Item2", "Item3", "Item4", "Item5");
-        
-        processor.processData(items, new ProgressCallback() {
-            @Override
-            public void onProgress(int percentage, String message) {
-                System.out.println("  ⏳ " + percentage + "% - " + message);
-            }
-            
-            @Override
-            public void onComplete() {
-                System.out.println("  ✅ All items processed!");
-            }
-        });
-        
-        Thread.sleep(3000);
-        
-        System.out.println("\n" + "=".repeat(50));
-        
-        // 6. Chained callbacks (Callback Hell example)
-        System.out.println("\n6. Chained Callbacks:");
-        ChainedCallbackExample.step1(new Callback<String>() {
-            @Override
-            public void onComplete(String userId) {
-                System.out.println("  ✅ Got user: " + userId);
-                
-                ChainedCallbackExample.step2(userId, new Callback<String>() {
-                    @Override
-                    public void onComplete(String orderId) {
-                        System.out.println("  ✅ Got order: " + orderId);
-                        
-                        ChainedCallbackExample.step3(orderId, new Callback<String>() {
-                            @Override
-                            public void onComplete(String paymentId) {
-                                System.out.println("  ✅ Payment processed: " + paymentId);
-                                System.out.println("  🎉 All steps completed!");
-                            }
-                            
-                            @Override
-                            public void onError(Exception error) {
-                                System.out.println("  ❌ Step 3 failed: " + error.getMessage());
-                            }
-                        });
-                    }
-                    
-                    @Override
-                    public void onError(Exception error) {
-                        System.out.println("  ❌ Step 2 failed: " + error.getMessage());
-                    }
-                });
-            }
-            
-            @Override
-            public void onError(Exception error) {
-                System.out.println("  ❌ Step 1 failed: " + error.getMessage());
-            }
-        });
-        
-        Thread.sleep(2000);
-        
-        System.out.println("\n--- Callback Pattern ---");
-        System.out.println("Function passed as argument to be 'called back' later");
-        
-        System.out.println("\n--- Benefits ---");
-        System.out.println("✓ Asynchronous operation handling");
-        System.out.println("✓ Event-driven programming");
-        System.out.println("✓ Decoupling");
-        System.out.println("✓ Flexible control flow");
-        
-        System.out.println("\n--- Drawbacks ---");
-        System.out.println("❌ Callback hell (nested callbacks)");
-        System.out.println("❌ Error handling complexity");
-        System.out.println("❌ Hard to read/maintain");
-        
-        System.out.println("\n--- Modern Alternatives ---");
-        System.out.println("• Promises/Futures");
-        System.out.println("• Async/Await");
-        System.out.println("• Reactive Streams (RxJava)");
-        System.out.println("• CompletableFuture (Java 8+)");
-        
-        System.out.println("\n--- Use Cases ---");
-        System.out.println("• Async I/O operations");
-        System.out.println("• Event listeners");
-        System.out.println("• GUI callbacks");
-        System.out.println("• Timer/Scheduler tasks");
-        System.out.println("• HTTP request/response");
+        System.out.println("\n=== Use Cases ===");
+        System.out.println("• Asynchronous I/O");
+        System.out.println("• Event handling");
+        System.out.println("• GUI frameworks");
+        System.out.println("• Network operations");
+        System.out.println("• Database queries");
     }
 }
